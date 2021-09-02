@@ -89,6 +89,7 @@ export const StreamingSearchResults: React.FunctionComponent<StreamingSearchResu
         authenticatedUser,
         telemetryService,
         codeInsightsEnabled,
+        extensionsController: { extHostAPI: extensionHostAPI },
     } = props
 
     // Log view event on first load
@@ -130,7 +131,7 @@ export const StreamingSearchResults: React.FunctionComponent<StreamingSearchResu
                     caseSensitive,
                     versionContext: resolveVersionContext(versionContext, availableVersionContexts),
                     trace,
-                    extensionsController: props.extensionsController,
+                    extensionHostAPI,
                 }).pipe(throttleTime(500, undefined, { leading: true, trailing: true })),
             [
                 streamSearch,
@@ -140,7 +141,7 @@ export const StreamingSearchResults: React.FunctionComponent<StreamingSearchResu
                 versionContext,
                 availableVersionContexts,
                 trace,
-                props.extensionsController,
+                extensionHostAPI,
             ]
         )
     )

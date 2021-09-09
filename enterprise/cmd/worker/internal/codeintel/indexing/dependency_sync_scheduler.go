@@ -58,8 +58,6 @@ type dependencySyncSchedulerHandler struct {
 func (h *dependencySyncSchedulerHandler) Handle(ctx context.Context, record workerutil.Record) error {
 	job := record.(dbstore.DependencyIndexingJob)
 
-	log15.Info("GOT NEW INDEXING JOB")
-
 	scanner, err := h.dbStore.ReferencesForUpload(ctx, job.UploadID)
 	if err != nil {
 		return errors.Wrap(err, "dbstore.ReferencesForUpload")
@@ -93,6 +91,8 @@ func (h *dependencySyncSchedulerHandler) Handle(ctx context.Context, record work
 		}
 
 		extsvcKind, ok := schemeToExternalService[packageReference.Scheme]
+		// add entry for empty string here so dependencies such as lsif-go ones still get
+		// an associated dependency indexing job
 		kinds[extsvcKind] = struct{}{}
 		if !ok {
 			continue
@@ -110,7 +110,7 @@ func (h *dependencySyncSchedulerHandler) Handle(ctx context.Context, record work
 
 	var nextSync *time.Time
 	// If len == 0, it will return all external services, which we definitely don't want.
-	if len(kinds) > 0 {
+	if len(kindsToArray(kinds)) > 0 {
 		nextSync = timePtr(time.Now())
 		externalServices, err := h.extsvcStore.List(ctx, database.ExternalServicesListOptions{
 			Kinds: kindsToArray(kinds),
@@ -124,7 +124,7 @@ func (h *dependencySyncSchedulerHandler) Handle(ctx context.Context, record work
 		}
 
 		log15.Info("syncing external services",
-			"upload", job.UploadID, "num", len(externalServices), "job", job.ID, "schemaKinds", kinds,
+			"upload", job.UploadID, "numExtSvc", len(externalServices), "job", job.ID, "schemaKinds", kinds,
 			"newRepos", newDependencyReposInserted, "existingInserts", oldDependencyReposInserted)
 
 		for _, externalService := range externalServices {

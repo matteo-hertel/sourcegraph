@@ -92,7 +92,7 @@ func scanFirstDependencyIndexingJobRecord(rows *sql.Rows, err error) (workerutil
 	return scanFirstDependencyIndexingJob(rows, err)
 }
 
-// DependencyIndexingJob is a subset of the lsif_dependency_indexing_jobs table and acts as the
+// DependencyIndexingQueueingJob is a subset of the lsif_dependency_indexing_jobs table and acts as the
 // queue and execution record for indexing the dependencies of a particular completed upload.
 type DependencyIndexingQueueingJob struct {
 	ID                  int        `json:"id"`
@@ -112,7 +112,7 @@ func (u DependencyIndexingQueueingJob) RecordID() int {
 	return u.ID
 }
 
-// scanDependencyIndexingJob scans a slice of dependency indexing jobs from the return value of
+// scanDependencyIndexingQueueingJob scans a slice of dependency indexing jobs from the return value of
 // `*Store.query`.
 func scanDependencyIndexingQueueingJobs(rows *sql.Rows, queryErr error) (_ []DependencyIndexingQueueingJob, err error) {
 	if queryErr != nil {
@@ -159,7 +159,7 @@ var dependencyIndexingQueueingJobColumns = []*sqlf.Query{
 	sqlf.Sprintf("j.external_service_sync"),
 }
 
-// scanFirstDependencyIndexingJob scans a slice of dependency indexing jobs from the return
+// scanFirstDependencyIndexingQueueingJob scans a slice of dependency indexing jobs from the return
 // value of `*Store.query` and returns the first.
 func scanFirstDependencyIndexingQueueingJob(rows *sql.Rows, err error) (DependencyIndexingQueueingJob, bool, error) {
 	jobs, err := scanDependencyIndexingQueueingJobs(rows, err)

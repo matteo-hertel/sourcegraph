@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -16,6 +17,7 @@ func TestDependencyIndexingSchedulerHandler(t *testing.T) {
 	mockDBStore := NewMockDBStore()
 	mockExtSvcStore := NewMockExternalServiceStore()
 	mockScanner := NewMockPackageReferenceScanner()
+	mockWorkerStore := NewMockWorkerStore()
 	mockDBStore.WithFunc.SetDefaultReturn(mockDBStore)
 	mockDBStore.GetUploadByIDFunc.SetDefaultReturn(dbstore.Upload{ID: 42, RepositoryID: 50, Indexer: "lsif-go"}, true, nil)
 	mockDBStore.ReferencesForUploadFunc.SetDefaultReturn(mockScanner, nil)
@@ -34,10 +36,13 @@ func TestDependencyIndexingSchedulerHandler(t *testing.T) {
 		dbStore:       mockDBStore,
 		indexEnqueuer: indexEnqueuer,
 		extsvcStore:   mockExtSvcStore,
+		workerStore:   mockWorkerStore,
 	}
 
-	job := dbstore.DependencyIndexingJob{
-		UploadID: 42,
+	job := dbstore.DependencyIndexingQueueingJob{
+		UploadID:            42,
+		ExternalServiceKind: "",
+		ExternalServiceSync: time.Time{},
 	}
 	if err := handler.Handle(context.Background(), job); err != nil {
 		t.Fatalf("unexpected error performing update: %s", err)
@@ -97,8 +102,10 @@ func TestDependencyIndexingSchedulerHandlerShouldSkipRepository(t *testing.T) {
 		extsvcStore:   mockExtSvcStore,
 	}
 
-	job := dbstore.DependencyIndexingJob{
-		UploadID: 42,
+	job := dbstore.DependencyIndexingQueueingJob{
+		ExternalServiceKind: "",
+		ExternalServiceSync: time.Time{},
+		UploadID:            42,
 	}
 	if err := handler.Handle(context.Background(), job); err != nil {
 		t.Fatalf("unexpected error performing update: %s", err)

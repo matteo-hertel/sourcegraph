@@ -30,11 +30,11 @@ type uploadExpirer struct {
 var _ goroutine.Handler = &uploadExpirer{}
 var _ goroutine.ErrorHandler = &uploadExpirer{}
 
-// NewUploadExpirer returns a background routine that periodically compares the age of upload records against
-// the age of uploads protected by global and repository specific data retention policies.
+// NewUploadExpirer returns a background routine that periodically compares the age of upload records
+// against the age of uploads protected by global and repository specific data retention policies.
 //
-// Uploads that are older than the protected retention age are marked as expired. Expired records with no
-// dependents will be removed by the expiredUploadDeleter.
+// Uploads that are older than the protected retention age are marked as expired. Expired records with
+// no dependents will be removed by the expiredUploadDeleter.
 func NewUploadExpirer(
 	dbStore DBStore,
 	gitserverClient GitserverClient,
@@ -57,10 +57,14 @@ func NewUploadExpirer(
 }
 
 func (e *uploadExpirer) Handle(ctx context.Context) (err error) {
-	// Get the batch of repositories that we'll handle in this invocation of the periodic goroutine. This set
-	// should contain a repository that has yet to be updated, or the repository that has been updated least
-	// recently. This allows us to update every repository reliably, even if it takes a long time to process
-	// through the backlog.
+	//
+	// TODO - do not return uploads that are younger than the last commit graph update
+	//
+
+	// Get the batch of repositories that we'll handle in this invocation of the periodic goroutine. This
+	// set should contain a repository that has yet to be updated, or the repository that has been updated
+	// least recently. This allows us to update every repository reliably, even if it takes a long time to
+	// process through the backlog.
 	repositoryIDs, err := e.dbStore.RepositoryIDsForRetentionScan(ctx, e.repositoryProcessDelay, e.repositoryBatchSize)
 	if err != nil {
 		return err
@@ -70,8 +74,8 @@ func (e *uploadExpirer) Handle(ctx context.Context) (err error) {
 		return nil
 	}
 
-	// Retrieve the set of global configuration policies that affect data retention. These policies are applied
-	// to all repositories.
+	// Retrieve the set of global configuration policies that affect data retention. These policies are
+	// applied to all repositories.
 	globalPolicies, err := e.dbStore.GetConfigurationPolicies(ctx, dbstore.GetConfigurationPoliciesOptions{
 		ForDataRetention: true,
 	})
@@ -101,8 +105,8 @@ func (e *uploadExpirer) handleRepository(ctx context.Context, repositoryID int, 
 	// TODO - add metrics for processed repositories
 	// TODO - add metrics for processed uploads
 
-	// Retrieve the set of configuration policies that affect data retention. These policies are applied only
-	// to this repository.
+	// Retrieve the set of configuration policies that affect data retention. These policies are applied
+	// only to this repository.
 	repositoryPolicies, err := e.dbStore.GetConfigurationPolicies(ctx, dbstore.GetConfigurationPoliciesOptions{
 		RepositoryID:     repositoryID,
 		ForDataRetention: true,
